@@ -2,15 +2,15 @@
 
 This is a Vagrant project powered by Chef to bring up a local Riak cluster.
 Each node can run either `Ubuntu 12.04` or `CentOS 6.4` 64-bit with `1024MB`
-of RAM by default. If you want to tune the OS or node/memory count, you'll
-have to edit the `Vagrantfile` directly.
+of RAM by default. If you want to change the operating system or tune VM
+resources, you'll have to edit the `Vagrantfile` directly.
 
 ## Configuration
 
 ### Install Vagrant
 
-Download and install Vagrant via the
-[Vagrant installer](http://downloads.vagrantup.com/).
+Download and install Vagrant via the [Vagrant
+installer](http://downloads.vagrantup.com/).
 
 ### Install Vagrant plugins
 
@@ -22,7 +22,7 @@ $ vagrant plugin install vagrant-omnibus
 ### Launch cluster
 
 ``` bash
-$ vagrant up
+$ NUM_NODES=3 vagrant up
 ```
 
 ### Accessing individual nodes
@@ -37,8 +37,8 @@ $ vagrant ssh riak1
 ## Vagrant boxes
 
 The Vagrant boxes used in this project were created by
-[Veewee](https://github.com/jedi4ever/veewee/). To view the Veewee definitions,
-please follow the links below:
+[Veewee](https://github.com/jedi4ever/veewee/). To view the Veewee
+definitions, please follow the links below:
 
 * [opscode-centos-6.4](https://github.com/opscode/bento/tree/master/definitions/centos-6.4)
 * [opscode-ubuntu-12.04](https://github.com/opscode/bento/tree/master/definitions/ubuntu-12.04)
