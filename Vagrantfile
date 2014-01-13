@@ -2,55 +2,65 @@
 # vi: set ft=ruby :
 
 CENTOS = {
-  box: "opscode-centos-6.4",
-  url: "https://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4_provisionerless.box"
+  box: "riak-1.4.7-centos-6.5",
+  virtualbox_url: "http://vagrant-riak-cluster.s3.amazonaws.com/virtualbox/riak-1.4.7-centos-6.5.box",
+  vmware_fusion_url: "http://vagrant-riak-cluster.s3.amazonaws.com/vmware/riak-1.4.7-centos-6.5.box"
 }
 UBUNTU = {
-  box: "opscode-ubuntu-12.04",
-  url: "https://opscode-vm.s3.amazonaws.com/vagrant/opscode_ubuntu-12.04_provisionerless.box"
+  box: "riak-1.4.7-ubuntu-12.04",
+  virtualbox_url: "http://vagrant-riak-cluster.s3.amazonaws.com/virtualbox/riak-1.4.7-ubuntu-12.04.box",
+  vmware_fusion_url: "http://vagrant-riak-cluster.s3.amazonaws.com/vmware/riak-1.4.7-ubuntu-12.04.box"
 }
 
-NODES         = ENV["NUM_NODES"].nil? ? 3 : ENV["NUM_NODES"].to_i
-OS            = UBUNTU
-BASE_IP       = "33.33.33"
-IP_INCREMENT  = 10
+VAGRANTFILE_API_VERSION = "2"
+NODES         = ENV["RIAK_NODES"].nil? ? 3 : ENV["RIAK_NODES"].to_i
+OS            = ENV["RIAK_OS"].nil? ? CENTOS : Kernel.const_get(ENV["RIAK_OS"])
 
-Vagrant.configure("2") do |cluster|
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |cluster|
   # Ensure latest version of Chef is installed.
   cluster.omnibus.chef_version = :latest
+
+  # Utilize the Cachier plugin to cache downloaded packages.
+  unless ENV["RIAK_CACHE"].nil?
+    cluster.cache.auto_detect = true
+  end
 
   # Utilize the Berkshelf plugin to resolve cookbook dependencies.
   cluster.berkshelf.enabled = true
 
   (1..NODES).each do |index|
-    last_octet = index * IP_INCREMENT
+    last_octet = index * 10
 
     cluster.vm.define "riak#{index}".to_sym do |config|
-      # Configure the VM and operating system.
       config.vm.box = OS[:box]
-      config.vm.box_url = OS[:url]
-      config.vm.provider(:virtualbox) { |v| v.customize ["modifyvm", :id, "--memory", 1024] }
+
+      config.vm.provider :virtualbox do |vb, override|
+        override.vm.box_url = OS[:virtualbox_url]
+
+        vb.customize ["modifyvm", :id, "--memory", "1024"]
+        vb.customize ["modifyvm", :id, "--cpus", "2"]
+      end
+
+      config.vm.provider :vmware_fusion do |vm, override|
+        override.vm.box_url = OS[:vmware_fusion_url]
+
+        vm.vmx["memsize"] = "1024"
+        vm.vmx["numvcpus"] = "2"
+      end
 
       # Setup the network and additional file shares.
       if index == 1
-        [ 8098, 8087, 8069 ].each do |port|
+        [ 8087, 8098 ].each do |port|
           config.vm.network :forwarded_port, guest: port, host: port
         end
       end
 
       config.vm.hostname = "riak#{index}"
-      config.vm.network :private_network, ip: "#{BASE_IP}.#{last_octet}"
+      config.vm.network :private_network, ip: "33.33.33.#{last_octet}"
 
       # Provision using Chef.
       config.vm.provision :chef_solo do |chef|
         chef.roles_path = "roles"
-
-        if config.vm.box =~ /ubuntu/
-          chef.add_recipe "apt"
-        else
-          chef.add_recipe "yum"
-          chef.add_recipe "yum::epel"
-        end
 
         chef.add_role "base"
         chef.add_role "riak"
@@ -58,8 +68,7 @@ Vagrant.configure("2") do |cluster|
         chef.json = {
           "riak" => {
             "args" => {
-              "+S" => 1,
-              "-name" => "riak@33.33.33.#{last_octet}"
+              "-name" => "riak@33.33.33.#{last_octet}.xip.io"
             },
             "config" => {
               "riak_control" => {
