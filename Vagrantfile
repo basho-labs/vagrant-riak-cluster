@@ -76,6 +76,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |cluster|
           }
         }
       end
+
+      if index > 1
+        config.vm.provision :shell, inline: <<-CLUSTER_JOIN
+          riak-admin cluster join riak@33.33.33.10.xip.io
+        CLUSTER_JOIN
+
+        if NODES > 1 && index == NODES
+          config.vm.provision :shell, inline: <<-CLUSTER_COMMIT
+            sleep 5
+
+            riak-admin cluster plan
+            riak-admin cluster commit
+          CLUSTER_COMMIT
+        end
+      end
     end
   end
 end
