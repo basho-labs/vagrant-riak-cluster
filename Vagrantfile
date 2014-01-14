@@ -48,13 +48,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |cluster|
         vm.vmx["numvcpus"] = "2"
       end
 
-      # Setup the network and additional file shares.
-      if index == 1
-        [ 8087, 8098 ].each do |port|
-          config.vm.network :forwarded_port, guest: port, host: port
-        end
-      end
-
       config.vm.hostname = "riak#{index}"
       config.vm.network :private_network, ip: "33.33.33.#{last_octet}"
 
@@ -71,8 +64,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |cluster|
               "-name" => "riak@33.33.33.#{last_octet}.xip.io"
             },
             "config" => {
-              "riak_control" => {
-                "enabled" => (index == 1 ? true : false)
+              "riak_api" => {
+                "pb" =>
+                  { "__string_33.33.33.#{last_octet}" => 8087 }
+              },
+              "riak_core" => {
+                "http" =>
+                  { "__string_33.33.33.#{last_octet}" => 8098 }
               }
             }
           }
