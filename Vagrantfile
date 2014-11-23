@@ -27,7 +27,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |cluster|
 
   # Utilize the Berkshelf plugin to resolve cookbook dependencies.
   cluster.berkshelf.enabled = true
-
+  cluster.berkshelf.berksfile_path ="./Berksfile"
+  
   (1..NODES).each do |index|
     last_octet = index * 10
 
