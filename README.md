@@ -25,7 +25,7 @@ $ vagrant plugin install vagrant-cachier
 ### Clone project repository
 
 ``` bash
-$ git clone https://github.com/hectcastro/vagrant-riak-cluster.git
+$ git clone https://github.com/basho-labs/vagrant-riak-cluster.git
 $ cd vagrant-riak-cluster
 ```
 
